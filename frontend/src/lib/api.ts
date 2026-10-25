@@ -167,6 +167,20 @@ export class ApiClient {
     if (!response.ok || payload?.success !== true) {
       const error = payload?.success === false ? payload.error : undefined;
 
+      /*
+       * No JSON envelope at all on a 404/405 means the request never reached
+       * an API: it was answered by whatever static host is serving the page.
+       * Saying "Request failed with status 405" there is useless - it reads
+       * like a bug in the app rather than a missing backend.
+       */
+      if (!payload && (response.status === 404 || response.status === 405)) {
+        throw new ApiError(
+          'No API is running at this address. If you are viewing the hosted preview, the backend is not deployed yet - see the repository README to run it locally.',
+          response.status,
+          'API_UNREACHABLE',
+        );
+      }
+
       throw new ApiError(
         error?.message ?? `Request failed with status ${response.status}`,
         response.status,

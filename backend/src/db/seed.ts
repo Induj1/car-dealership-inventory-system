@@ -126,9 +126,13 @@ const SAMPLE_VEHICLES: CreateVehicleInput[] = [
   },
 ];
 
-async function seed(): Promise<void> {
+/**
+ * Seeds an already-open database. Exported so the server can call it on first
+ * boot (SEED_ON_START), which is how a container with an empty volume ends up
+ * with something to show without anyone running a one-off command against it.
+ */
+export async function seedDatabase(db: ReturnType<typeof openDatabase>): Promise<void> {
   const env = getEnv();
-  const db = openDatabase(env.DATABASE_PATH);
 
   const users = new UserRepository(db);
   const vehicles = new VehicleService(new VehicleRepository(db));
@@ -174,10 +178,23 @@ async function seed(): Promise<void> {
   }
 
   console.log(`Added ${added} vehicle(s); ${SAMPLE_VEHICLES.length - added} already present.`);
-  db.close();
 }
 
-seed().catch((error: unknown) => {
-  console.error('Seeding failed:', error);
-  process.exit(1);
-});
+/** `npm run seed` - opens the configured database, seeds it, closes it. */
+async function main(): Promise<void> {
+  const db = openDatabase(getEnv().DATABASE_PATH);
+
+  try {
+    await seedDatabase(db);
+  } finally {
+    db.close();
+  }
+}
+
+// Only run as a script, not when the server imports seedDatabase.
+if (process.argv[1]?.includes('seed')) {
+  main().catch((error: unknown) => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+  });
+}

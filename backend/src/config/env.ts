@@ -40,6 +40,10 @@ const envSchema = z.object({
   // X-Forwarded-For becomes a way to spoof an IP past the rate limiter.
   TRUST_PROXY: booleanish.default('false'),
 
+  // Seed demo data on first boot. Intended for a demo deployment whose
+  // volume starts empty; it is idempotent, so a restart adds nothing.
+  SEED_ON_START: booleanish.default('false'),
+
   // Single-service mode: serve the built SPA from this API.
   SERVE_SPA: booleanish.default('false'),
   SPA_DIST_PATH: z.string().default('../frontend/dist'),
