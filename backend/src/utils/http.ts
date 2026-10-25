@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import type { ZodError, ZodType } from 'zod';
+import type { ZodError, ZodTypeAny, output } from 'zod';
 import { ValidationError } from './errors.js';
 
 /**
@@ -26,8 +26,13 @@ export function sendSuccess<T>(
  *
  * Parsing at the edge of the application is what lets services below assume
  * their inputs are already well-formed.
+ *
+ * The generic is the schema, not its payload: several schemas transform their
+ * input (a lower-case category becomes an enum member, a "true" string
+ * becomes a boolean), and inferring from the schema is what makes the caller
+ * see the parsed output type rather than the raw request type.
  */
-export function parseOrThrow<T>(schema: ZodType<T>, data: unknown): T {
+export function parseOrThrow<S extends ZodTypeAny>(schema: S, data: unknown): output<S> {
   const result = schema.safeParse(data);
 
   if (!result.success) {
