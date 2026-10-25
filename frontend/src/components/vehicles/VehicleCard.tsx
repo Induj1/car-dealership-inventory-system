@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '../ui/Button.js';
 import { formatCategory, formatPrice } from '../../lib/format.js';
 import type { Vehicle } from '../../types/index.js';
@@ -33,6 +34,11 @@ export function VehicleCard({
   onDelete,
   onRestock,
 }: VehicleCardProps) {
+  // A dead photo URL must degrade to the generated artwork rather than
+  // leaving a broken-image icon sitting in the grid.
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const showPhoto = Boolean(vehicle.imageUrl) && !photoFailed;
+
   const soldOut = vehicle.quantity === 0;
   const lastOne = vehicle.quantity === 1;
   const tint = CATEGORY_TINTS[vehicle.category] ?? 'from-ink-600/30 to-ink-800/10';
@@ -42,16 +48,27 @@ export function VehicleCard({
       className="surface group flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:border-brand-400/40 hover:shadow-lift"
       aria-label={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
     >
-      {/* Artwork panel: a tinted silhouette stands in for a real photo. */}
-      <div className={`relative h-36 bg-gradient-to-br ${tint}`}>
-        <svg
-          className="absolute inset-0 m-auto h-20 w-20 text-ink-100/25 transition-transform duration-300 group-hover:scale-105"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-        </svg>
+      {/* A photo when the listing has one, generated artwork when it does not. */}
+      <div className={`relative h-36 overflow-hidden bg-gradient-to-br ${tint}`}>
+        {showPhoto ? (
+          <img
+            src={vehicle.imageUrl ?? ''}
+            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => setPhotoFailed(true)}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <svg
+            className="absolute inset-0 m-auto h-20 w-20 text-ink-100/25 transition-transform duration-300 group-hover:scale-105"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+          </svg>
+        )}
 
         <span className="absolute left-3 top-3 rounded-full border border-ink-100/15 bg-ink-950/70 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-ink-200 backdrop-blur-sm">
           {formatCategory(vehicle.category)}

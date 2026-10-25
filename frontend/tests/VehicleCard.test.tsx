@@ -13,6 +13,7 @@ const vehicle: Vehicle = {
   price: 21500,
   quantity: 3,
   description: 'Reliable commuter',
+  imageUrl: null,
   createdAt: '2026-01-01 10:00:00',
   updatedAt: '2026-01-01 10:00:00',
 };

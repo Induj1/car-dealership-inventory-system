@@ -19,6 +19,7 @@ export interface Vehicle {
   price: number;
   quantity: number;
   description: string | null;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -57,10 +58,13 @@ export interface VehicleInput {
   make: string;
   model: string;
   category: string;
-  year: number;
-  price: number;
-  quantity: number;
+  // Optional on the wire: a blank numeric field is sent as missing, so the
+  // server's "required" rule fires instead of a silent zero.
+  year?: number;
+  price?: number;
+  quantity?: number;
   description?: string | null;
+  imageUrl?: string | null;
 }
 
 export const VEHICLE_CATEGORIES = [

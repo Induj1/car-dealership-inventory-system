@@ -31,6 +31,33 @@ const imageUrlSchema = z
   .optional()
   .nullable();
 
+/**
+ * A required numeric field that reports itself properly when it is missing.
+ *
+ * `z.coerce.number()` runs Number() on everything, so an absent value becomes
+ * NaN and the user is told "Expected number, received nan" instead of "Price
+ * is required". Preprocessing leaves undefined alone - so required_error
+ * fires - while still accepting the strings that arrive over HTTP.
+ */
+function requiredNumber(
+  messages: { required: string; invalid: string },
+  // Typed as ZodNumber rather than ZodTypeAny on purpose: z.preprocess takes
+  // its output type from this, and ZodTypeAny would hand every caller `any`.
+  constrain: (base: z.ZodNumber) => z.ZodNumber,
+) {
+  const base = z.number({
+    required_error: messages.required,
+    invalid_type_error: messages.invalid,
+  });
+
+  return z.preprocess((value) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'string' && value.trim() === '') return undefined;
+
+    return typeof value === 'number' ? value : Number(value);
+  }, constrain(base));
+}
+
 export const createVehicleSchema = z.object({
   make: z.string({ required_error: 'Make is required' }).trim().min(1, 'Make is required').max(60),
   model: z
@@ -39,20 +66,23 @@ export const createVehicleSchema = z.object({
     .min(1, 'Model is required')
     .max(60),
   category: categorySchema,
-  year: z.coerce
-    .number({ required_error: 'Year is required' })
-    .int('Year must be a whole number')
-    .min(1900, 'Year must be 1900 or later')
-    .max(currentYear + 2, `Year cannot be later than ${currentYear + 2}`),
-  price: z.coerce
-    .number({ required_error: 'Price is required' })
-    .nonnegative('Price cannot be negative')
-    .max(100_000_000, 'Price is unrealistically high'),
-  quantity: z.coerce
-    .number({ required_error: 'Quantity is required' })
-    .int('Quantity must be a whole number')
-    .nonnegative('Quantity cannot be negative')
-    .max(100_000),
+  year: requiredNumber({ required: 'Year is required', invalid: 'Year must be a number' }, (n) =>
+    n
+      .int('Year must be a whole number')
+      .min(1900, 'Year must be 1900 or later')
+      .max(currentYear + 2, `Year cannot be later than ${currentYear + 2}`),
+  ),
+  price: requiredNumber({ required: 'Price is required', invalid: 'Price must be a number' }, (n) =>
+    n.nonnegative('Price cannot be negative').max(100_000_000, 'Price is unrealistically high'),
+  ),
+  quantity: requiredNumber(
+    { required: 'Quantity is required', invalid: 'Quantity must be a number' },
+    (n) =>
+      n
+        .int('Quantity must be a whole number')
+        .nonnegative('Quantity cannot be negative')
+        .max(100_000),
+  ),
   description: z.string().trim().max(500).optional().nullable(),
   imageUrl: imageUrlSchema,
 });
@@ -105,7 +135,11 @@ export const purchaseSchema = z.object({
 });
 
 export const restockSchema = z.object({
-  quantity: z.coerce.number().int().positive('Quantity must be at least 1').max(10_000),
+  quantity: requiredNumber(
+    { required: 'Quantity is required', invalid: 'Quantity must be a number' },
+    (n) =>
+      n.int('Quantity must be a whole number').positive('Quantity must be at least 1').max(10_000),
+  ),
 });
 
 export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;

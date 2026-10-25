@@ -23,6 +23,7 @@ type FormState = {
   price: string;
   quantity: string;
   description: string;
+  imageUrl: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -33,7 +34,27 @@ const EMPTY_FORM: FormState = {
   price: '',
   quantity: '1',
   description: '',
+  imageUrl: '',
 };
+
+/**
+ * Reads a numeric field, treating blank as *missing* rather than as zero.
+ *
+ * `Number('')` is 0, so without this an empty Price field quietly lists a car
+ * for nothing instead of failing validation. Sending undefined lets the
+ * server's own "Price is required" rule fire and come back attached to the
+ * field. A deliberate 0 still comes through as 0, because zero stock is a
+ * legitimate listing.
+ */
+function toNumber(value: string): number | undefined {
+  const trimmed = value.trim();
+
+  if (trimmed === '') return undefined;
+
+  const parsed = Number(trimmed);
+
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
 
 /**
  * One form for both adding and editing, since the fields are identical and
@@ -64,6 +85,7 @@ export function VehicleFormModal({
             price: String(vehicle.price),
             quantity: String(vehicle.quantity),
             description: vehicle.description ?? '',
+            imageUrl: vehicle.imageUrl ?? '',
           }
         : EMPTY_FORM,
     );
@@ -79,10 +101,12 @@ export function VehicleFormModal({
       make: form.make.trim(),
       model: form.model.trim(),
       category: form.category,
-      year: Number(form.year),
-      price: Number(form.price),
-      quantity: Number(form.quantity),
+      year: toNumber(form.year),
+      price: toNumber(form.price),
+      quantity: toNumber(form.quantity),
       description: form.description.trim() || null,
+      // An empty field clears the photo rather than sending "".
+      imageUrl: form.imageUrl.trim() || null,
     });
   };
 
@@ -158,6 +182,17 @@ export function VehicleFormModal({
             required
           />
         </div>
+
+        <TextField
+          label="Photo URL"
+          type="url"
+          inputMode="url"
+          value={form.imageUrl}
+          onChange={(event) => set('imageUrl', event.target.value)}
+          error={fieldErrors.imageUrl}
+          placeholder="https://..."
+          hint="Optional. Leave empty to use the generated artwork."
+        />
 
         <TextAreaField
           label="Description"

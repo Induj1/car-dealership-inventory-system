@@ -29,6 +29,7 @@ const FOCUSABLE =
  */
 export function Modal({ open, title, description, onClose, children, footer }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -36,8 +37,15 @@ export function Modal({ open, title, description, onClose, children, footer }: M
     const panel = panelRef.current;
     if (!panel) return;
 
+    /*
+     * Deliberately not filtered by offsetParent: every element inside a
+     * position:fixed container reports offsetParent === null, so that check
+     * would collapse the list to a single element and trap focus on it.
+     * The selector already excludes disabled controls and tabindex="-1";
+     * only explicitly hidden subtrees need excluding beyond that.
+     */
     const focusable = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-      (element) => element.offsetParent !== null || element === document.activeElement,
+      (element) => !element.hasAttribute('hidden') && !element.closest('[aria-hidden="true"]'),
     );
 
     if (focusable.length === 0) return;
@@ -74,8 +82,14 @@ export function Modal({ open, title, description, onClose, children, footer }: M
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Move focus into the dialog so keyboard users are not left behind it.
-    panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    // Focus the first control in the body rather than the close button: a
+    // restock dialog should land the cursor in the quantity field, not on
+    // the X. Falls back to the panel's first focusable if the body has none.
+    const target =
+      bodyRef.current?.querySelector<HTMLElement>(FOCUSABLE) ??
+      panelRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+
+    target?.focus();
 
     return () => {
       document.removeEventListener('keydown', onKeyDown);
@@ -90,13 +104,17 @@ export function Modal({ open, title, description, onClose, children, footer }: M
   return (
     <div className="animate-fade-in fixed inset-0 z-40 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-6">
       {/*
-        A real button rather than a div with a click handler: dismissing by
-        "clicking outside" is then available to keyboard and screen reader
-        users too, instead of being mouse-only.
+        A real button rather than a div with a click handler, so it is a
+        genuine control rather than a div that happens to respond to a mouse.
+        Hidden from assistive technology and skipped by Tab on purpose: it
+        would otherwise be a second, identically named "Close dialog" control.
+        The keyboard path for dismissing is Escape, which is tested.
       */}
       <button
         type="button"
-        aria-label="Close dialog"
+        aria-hidden="true"
+        tabIndex={-1}
+        data-testid="modal-backdrop"
         onClick={onClose}
         className="absolute inset-0 h-full w-full cursor-default bg-ink-950/80 backdrop-blur-sm"
       />
@@ -140,7 +158,7 @@ export function Modal({ open, title, description, onClose, children, footer }: M
           </button>
         </div>
 
-        {children}
+        <div ref={bodyRef}>{children}</div>
 
         {footer ? <div className="mt-6 flex justify-end gap-3">{footer}</div> : null}
       </div>

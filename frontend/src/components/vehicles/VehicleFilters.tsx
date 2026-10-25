@@ -137,7 +137,9 @@ export function VehicleFilters({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink-700/60 pt-4">
-        <p className="text-sm text-ink-400">
+        {/* Announced to screen readers when filtering changes the count,
+            which is otherwise a silent, purely visual update. */}
+        <p className="text-sm text-ink-400" role="status" aria-live="polite">
           <span className="font-semibold text-ink-100">{resultCount}</span>{' '}
           {resultCount === 1 ? 'vehicle' : 'vehicles'} found
           {activeCount > 0

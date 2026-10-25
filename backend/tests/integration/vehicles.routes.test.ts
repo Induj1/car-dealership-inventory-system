@@ -505,3 +505,56 @@ describe('vehicle endpoints', () => {
     });
   });
 });
+
+describe('validation messages', () => {
+  let ctx: TestContext;
+  let adminToken: string;
+
+  beforeEach(async () => {
+    ctx = createTestContext();
+    adminToken = (await registerAdmin(ctx.app, ctx.db)).token;
+  });
+
+  afterEach(() => ctx.cleanup());
+
+  it('says a required number is missing rather than "received nan"', async () => {
+    // Zod's coercion turns an absent value into NaN, which produced the
+    // user-facing message "Expected number, received nan". Found by leaving
+    // the price blank in the running app.
+    const response = await request(ctx.app)
+      .post('/api/vehicles')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ make: 'Polestar', model: 'Polestar 4', category: 'SEDAN', year: 2025 });
+
+    expect(response.status).toBe(422);
+
+    const priceError = response.body.error.details.find(
+      (detail: { field: string }) => detail.field === 'price',
+    );
+
+    expect(priceError.message).toBe('Price is required');
+    expect(JSON.stringify(response.body)).not.toMatch(/nan/i);
+  });
+
+  it('still reports a genuinely non-numeric price as such', async () => {
+    const response = await request(ctx.app)
+      .post('/api/vehicles')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ ...newVehicle, price: 'free' });
+
+    expect(response.status).toBe(422);
+    expect(
+      response.body.error.details.find((d: { field: string }) => d.field === 'price').message,
+    ).toBe('Price must be a number');
+  });
+
+  it('accepts a deliberate zero quantity', async () => {
+    const response = await request(ctx.app)
+      .post('/api/vehicles')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ ...newVehicle, quantity: 0 });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.vehicle.quantity).toBe(0);
+  });
+});
