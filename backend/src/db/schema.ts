@@ -62,4 +62,11 @@ export const MIGRATIONS: readonly string[] = [
   CREATE UNIQUE INDEX idx_vehicles_identity
     ON vehicles (lower(make), lower(model), year);
   `,
+
+  // 4 - an optional photo for a listing. Nullable, because the dealership
+  // lists cars before the photographer has been round, and the UI falls back
+  // to generated artwork.
+  `
+  ALTER TABLE vehicles ADD COLUMN image_url TEXT;
+  `,
 ];

@@ -14,6 +14,23 @@ const categorySchema = z
     }),
   );
 
+/**
+ * A photo URL ends up in an <img src>, so the scheme is restricted to http(s)
+ * rather than trusting whatever an admin pastes in. z.string().url() alone
+ * would happily accept javascript: and data: URLs.
+ */
+const imageUrlSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .url('Must be a valid URL')
+  .refine(
+    (value) => value.startsWith('http://') || value.startsWith('https://'),
+    'Image URL must start with http:// or https://',
+  )
+  .optional()
+  .nullable();
+
 export const createVehicleSchema = z.object({
   make: z.string({ required_error: 'Make is required' }).trim().min(1, 'Make is required').max(60),
   model: z
@@ -37,6 +54,7 @@ export const createVehicleSchema = z.object({
     .nonnegative('Quantity cannot be negative')
     .max(100_000),
   description: z.string().trim().max(500).optional().nullable(),
+  imageUrl: imageUrlSchema,
 });
 
 /**

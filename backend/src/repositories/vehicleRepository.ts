@@ -11,6 +11,7 @@ interface VehicleRow {
   price: number;
   quantity: number;
   description: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export interface CreateVehicleRecord {
   price: number;
   quantity: number;
   description: string | null;
+  imageUrl: string | null;
 }
 
 export interface PaginatedVehicles {
@@ -51,8 +53,8 @@ export class VehicleRepository {
   create(record: CreateVehicleRecord): Vehicle {
     this.db
       .prepare(
-        `INSERT INTO vehicles (id, make, model, category, year, price, quantity, description)
-         VALUES (@id, @make, @model, @category, @year, @price, @quantity, @description)`,
+        `INSERT INTO vehicles (id, make, model, category, year, price, quantity, description, image_url)
+         VALUES (@id, @make, @model, @category, @year, @price, @quantity, @description, @imageUrl)`,
       )
       .run(record);
 
@@ -91,23 +93,29 @@ export class VehicleRepository {
    * values are always bound, so no caller-supplied string reaches the SQL text.
    */
   update(id: string, patch: Partial<CreateVehicleRecord>): Vehicle | null {
-    const columns: (keyof CreateVehicleRecord)[] = [
-      'make',
-      'model',
-      'category',
-      'year',
-      'price',
-      'quantity',
-      'description',
-    ];
+    // Domain field -> column name. A fixed map, so nothing a caller sends can
+    // influence the SQL text; only the values are ever bound.
+    const COLUMNS: Record<keyof Omit<CreateVehicleRecord, 'id'>, string> = {
+      make: 'make',
+      model: 'model',
+      category: 'category',
+      year: 'year',
+      price: 'price',
+      quantity: 'quantity',
+      description: 'description',
+      imageUrl: 'image_url',
+    };
 
     const assignments: string[] = [];
     const params: Record<string, unknown> = { id };
 
-    for (const column of columns) {
-      if (patch[column] !== undefined) {
-        assignments.push(`${column} = @${column}`);
-        params[column] = patch[column];
+    for (const [field, column] of Object.entries(COLUMNS) as [
+      keyof Omit<CreateVehicleRecord, 'id'>,
+      string,
+    ][]) {
+      if (patch[field] !== undefined) {
+        assignments.push(`${column} = @${field}`);
+        params[field] = patch[field];
       }
     }
 
@@ -268,6 +276,7 @@ function toVehicle(row: VehicleRow): Vehicle {
     price: row.price,
     quantity: row.quantity,
     description: row.description,
+    imageUrl: row.image_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

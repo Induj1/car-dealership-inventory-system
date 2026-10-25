@@ -25,6 +25,7 @@ export interface Vehicle {
   price: number;
   quantity: number;
   description: string | null;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

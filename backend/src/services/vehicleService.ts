@@ -32,6 +32,7 @@ export class VehicleService {
       price: input.price,
       quantity: input.quantity,
       description: input.description?.trim() ?? null,
+      imageUrl: input.imageUrl ?? null,
     });
   }
 
@@ -66,6 +67,7 @@ export class VehicleService {
       ...(patch.description !== undefined
         ? { description: patch.description?.trim() ?? null }
         : {}),
+      ...(patch.imageUrl !== undefined ? { imageUrl: patch.imageUrl ?? null } : {}),
     });
 
     if (!updated) throw new NotFoundError(`No vehicle with id ${id}`);
