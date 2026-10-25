@@ -12,6 +12,8 @@ declare global {
     interface Request {
       /** Present only on routes behind the `authenticate` middleware. */
       user?: AuthenticatedUser;
+      /** Correlation id, set for every request by the requestId middleware. */
+      id?: string;
     }
   }
 }

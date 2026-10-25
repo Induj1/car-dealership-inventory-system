@@ -7,6 +7,7 @@ import { VehicleService } from './services/vehicleService.js';
 import { InventoryService } from './services/inventoryService.js';
 import { AuthController } from './controllers/authController.js';
 import { VehicleController } from './controllers/vehicleController.js';
+import { HealthController } from './controllers/healthController.js';
 import { createTransactionRunner } from './db/transaction.js';
 
 /**
@@ -20,6 +21,7 @@ import { createTransactionRunner } from './db/transaction.js';
 export interface Container {
   authController: AuthController;
   vehicleController: VehicleController;
+  healthController: HealthController;
   userRepository: UserRepository;
 }
 
@@ -38,5 +40,6 @@ export function buildContainer(db: Database): Container {
     userRepository,
     authController: new AuthController(authService, userRepository),
     vehicleController: new VehicleController(vehicleService, inventoryService),
+    healthController: new HealthController(db),
   };
 }
