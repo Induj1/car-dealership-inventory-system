@@ -12,7 +12,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.ts'],
-      exclude: ['src/server.ts', 'src/db/seed.ts', 'src/db/migrate.ts'],
+      // Entry points, one-shot scripts and pure type declarations carry no
+      // behaviour worth asserting on.
+      exclude: ['src/server.ts', 'src/db/seed.ts', 'src/db/migrate.ts', '**/*.d.ts'],
     },
   },
 });
