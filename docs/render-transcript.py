@@ -114,17 +114,23 @@ file and nothing else; the script that produced it is
 [`docs/render-transcript.py`](docs/render-transcript.py), so the rendering is
 reproducible and checkable against the source.
 
-A note on how it reads: this was a single long agent session rather than a
-back-and-forth chat, so there is one human turn — the kata brief — followed by
-the agent working. The reasoning blocks are the interesting part if you want to
-see how decisions were actually made; they are collapsed by default.
+One caveat about that raw export, since it is genuinely unedited: alongside the
+conversation it also carries the session's own system and environment context —
+the agent's tool catalogue, local paths, and the git identity the commits were
+made with. Nothing secret, but it is more than the conversation itself. If you
+only want the conversation, read this file.
+
+A note on how it reads: this was a long agent session rather than a rapid
+back-and-forth chat, so there are %d human turns with a great deal of agent work
+between them. The reasoning blocks are the interesting part if you want to see
+how decisions were actually made; they are collapsed by default.
 
 Tool calls appear as `> **Tool call**` blocks. `Bash`, `Write` and `Edit` are
 file and command operations; `mcp__Claude_Browser__*` calls are the agent
 driving a real browser against the running app, which is how the disabled-button
 bug described in the README was found.
 
-""" % (TOOL_INPUT_LIMIT, TOOL_RESULT_LIMIT)
+""" % (TOOL_INPUT_LIMIT, TOOL_RESULT_LIMIT, turn)
 
 io.open(OUT, 'w', encoding='utf-8', newline='\n').write(header + ''.join(out) + '\n')
 print('wrote', OUT, os.path.getsize(OUT), 'bytes,', turn, 'human turn(s),', len(rows), 'messages')

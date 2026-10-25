@@ -48,9 +48,13 @@ export function serveSpa(app: Express, options: SpaOptions): void {
    * instead of seeing a clean 404.
    */
   app.get(/^(?!\/api(?:\/|$)).*/, (_req, res, next) => {
-    res.sendFile(join(distPath, 'index.html'), { headers: { 'Cache-Control': 'no-cache' } }, (error) => {
-      if (error) next();
-    });
+    res.sendFile(
+      join(distPath, 'index.html'),
+      { headers: { 'Cache-Control': 'no-cache' } },
+      (error) => {
+        if (error) next();
+      },
+    );
   });
 }
 
