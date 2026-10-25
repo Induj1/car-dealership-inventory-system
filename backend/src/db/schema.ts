@@ -53,4 +53,13 @@ export const MIGRATIONS: readonly string[] = [
   CREATE INDEX idx_purchases_user ON purchases (user_id);
   CREATE INDEX idx_purchases_vehicle ON purchases (vehicle_id);
   `,
+
+  // 3 - a vehicle's natural key is make + model + year. The service already
+  // checks this, but enforcing it here means no code path (a future import
+  // script, a race between two admins) can create a duplicate listing.
+  // lower() is applied so "Toyota" and "toyota" collide as they should.
+  `
+  CREATE UNIQUE INDEX idx_vehicles_identity
+    ON vehicles (lower(make), lower(model), year);
+  `,
 ];

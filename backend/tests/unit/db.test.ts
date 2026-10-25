@@ -68,6 +68,18 @@ describe('database schema', () => {
     expect(() => insert.run('v2', 'Toyota', 'Corolla', 'SEDAN', 2022, -5, 1)).toThrow(/CHECK/i);
   });
 
+  it('rejects two listings with the same make, model and year', () => {
+    const insert = db.prepare(
+      'INSERT INTO vehicles (id, make, model, category, year, price, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    );
+    insert.run('v10', 'Toyota', 'Corolla', 'SEDAN', 2022, 21000, 1);
+
+    // Case differences must not slip past the constraint either.
+    expect(() => insert.run('v11', 'toyota', 'COROLLA', 'SEDAN', 2022, 21000, 1)).toThrow(
+      /UNIQUE/i,
+    );
+  });
+
   it('is idempotent when opened twice against the same file', () => {
     // openDatabase runs migrations; re-running them must not fail.
     const second = createTestDatabase();
