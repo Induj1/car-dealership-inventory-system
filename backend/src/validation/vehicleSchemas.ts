@@ -1,0 +1,76 @@
+import { z } from 'zod';
+import { VEHICLE_CATEGORIES } from '../types/index.js';
+
+const currentYear = new Date().getFullYear();
+
+/** Categories are a closed set so the UI can offer a reliable filter list. */
+const categorySchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .pipe(z.enum(VEHICLE_CATEGORIES, { message: `Category must be one of: ${VEHICLE_CATEGORIES.join(', ')}` }));
+
+export const createVehicleSchema = z.object({
+  make: z.string({ required_error: 'Make is required' }).trim().min(1, 'Make is required').max(60),
+  model: z.string({ required_error: 'Model is required' }).trim().min(1, 'Model is required').max(60),
+  category: categorySchema,
+  year: z.coerce
+    .number({ required_error: 'Year is required' })
+    .int('Year must be a whole number')
+    .min(1900, 'Year must be 1900 or later')
+    .max(currentYear + 2, `Year cannot be later than ${currentYear + 2}`),
+  price: z.coerce
+    .number({ required_error: 'Price is required' })
+    .nonnegative('Price cannot be negative')
+    .max(100_000_000, 'Price is unrealistically high'),
+  quantity: z.coerce
+    .number({ required_error: 'Quantity is required' })
+    .int('Quantity must be a whole number')
+    .nonnegative('Quantity cannot be negative')
+    .max(100_000),
+  description: z.string().trim().max(500).optional().nullable(),
+});
+
+/**
+ * Updates are a partial of create, but an empty body is rejected: PUT with
+ * nothing to change is a client mistake, not a no-op.
+ */
+export const updateVehicleSchema = createVehicleSchema.partial().refine(
+  (patch) => Object.keys(patch).length > 0,
+  { message: 'Provide at least one field to update' },
+);
+
+const SORT_OPTIONS = ['newest', 'oldest', 'price_asc', 'price_desc', 'year_desc', 'year_asc'] as const;
+
+export const searchVehiclesSchema = z.object({
+  q: z.string().trim().max(120).optional(),
+  make: z.string().trim().max(60).optional(),
+  model: z.string().trim().max(60).optional(),
+  // Category is a free string here (not the enum) so an unknown value simply
+  // matches nothing instead of 422-ing a browsing user.
+  category: z.string().trim().max(40).optional(),
+  minPrice: z.coerce.number().nonnegative('minPrice cannot be negative').optional(),
+  maxPrice: z.coerce.number().nonnegative('maxPrice cannot be negative').optional(),
+  minYear: z.coerce.number().int().min(1900).optional(),
+  maxYear: z.coerce.number().int().max(currentYear + 2).optional(),
+  availableOnly: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((value) => value === true || value === 'true')
+    .optional(),
+  sort: z.enum(SORT_OPTIONS).default('newest'),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100, 'limit cannot exceed 100').default(12),
+});
+
+export const purchaseSchema = z.object({
+  quantity: z.coerce.number().int().positive('Quantity must be at least 1').max(100).default(1),
+});
+
+export const restockSchema = z.object({
+  quantity: z.coerce.number().int().positive('Quantity must be at least 1').max(10_000),
+});
+
+export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
+export type UpdateVehicleInput = z.infer<typeof updateVehicleSchema>;
+export type SearchVehiclesQuery = z.infer<typeof searchVehiclesSchema>;
+export type SearchVehiclesCriteria = Partial<SearchVehiclesQuery>;
