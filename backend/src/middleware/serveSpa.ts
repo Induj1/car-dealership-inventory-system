@@ -2,32 +2,33 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Express } from 'express';
-import { getEnv } from '../config/env.js';
+
+export interface SpaOptions {
+  enabled: boolean;
+  /** Where the built frontend lives, absolute or relative to the backend. */
+  distPath: string;
+}
 
 /**
- * Single-service mode, off unless SERVE_SPA is set.
+ * Single-service mode: the API also serves the built SPA.
  *
- * When enabled and a built frontend exists at SPA_DIST_PATH (default
- * ../frontend/dist), the API serves it too: hashed assets with a long cache
- * lifetime, and index.html for any non-API path so client-side routes survive
- * a refresh.
+ * Hashed assets get a long cache lifetime, index.html gets none (or a deploy
+ * would not be picked up), and any non-API path falls through to index.html
+ * so client-side routes survive a refresh.
  *
- * Entirely optional, and deliberately opt-in rather than "on if the folder
- * happens to exist" - behaviour that changes depending on whether someone ran
- * a build is the kind of thing that makes an environment-specific bug. Running
- * the two apps separately in development is unchanged; this just lets a
- * deployment be one container instead of two, which removes a whole class of
- * CORS and origin configuration.
+ * Deliberately opt-in rather than "on if the folder happens to exist":
+ * behaviour that changes depending on whether someone ran a build is how you
+ * get a bug that only reproduces in one environment. The options are passed
+ * in rather than read from the environment here, so this can be tested
+ * against a temporary directory instead of only inside a container.
  */
-export function serveSpa(app: Express): void {
-  const env = getEnv();
+export function serveSpa(app: Express, options: SpaOptions): void {
+  if (!options.enabled) return;
 
-  if (!env.SERVE_SPA) return;
-
-  const distPath = resolveDistPath(env.SPA_DIST_PATH);
+  const distPath = resolveDistPath(options.distPath);
 
   if (!distPath) {
-    console.warn(`SERVE_SPA is on but no built frontend was found at ${env.SPA_DIST_PATH}`);
+    console.warn(`SERVE_SPA is on but no built frontend was found at ${options.distPath}`);
     return;
   }
 
@@ -40,15 +41,16 @@ export function serveSpa(app: Express): void {
     }),
   );
 
-  // index.html must never be cached, or a deploy would not be picked up.
-  app.get(/^(?!\/api\/).*/, (_req, res, next) => {
-    res.sendFile(
-      join(distPath, 'index.html'),
-      { headers: { 'Cache-Control': 'no-cache' } },
-      (error) => {
-        if (error) next();
-      },
-    );
+  /*
+   * Every path except /api/* falls through to index.html. The negative
+   * lookahead matters: without it a mistyped API route would return the HTML
+   * page with a 200, and a client would try to parse a web page as JSON
+   * instead of seeing a clean 404.
+   */
+  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res, next) => {
+    res.sendFile(join(distPath, 'index.html'), { headers: { 'Cache-Control': 'no-cache' } }, (error) => {
+      if (error) next();
+    });
   });
 }
 

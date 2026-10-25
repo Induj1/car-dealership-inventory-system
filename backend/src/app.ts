@@ -10,11 +10,13 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requestId } from './middleware/requestId.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import type { RateLimitOptions } from './middleware/rateLimit.js';
-import { serveSpa } from './middleware/serveSpa.js';
+import { serveSpa, type SpaOptions } from './middleware/serveSpa.js';
 
 export interface AppOptions {
   /** Overrides the env-configured throttle. Tests use a deliberately tiny one. */
   authRateLimit?: RateLimitOptions;
+  /** Overrides single-service mode, so it can be tested without a container. */
+  spa?: SpaOptions;
 }
 
 /**
@@ -72,9 +74,9 @@ export function createApp(db: Database, options: AppOptions = {}): Express {
 
   app.use('/api', createApiRouter(buildContainer(db), rateLimitOptions));
 
-  // Optional single-service mode: if a built frontend is present, serve it.
-  // A deploy can then be one container instead of two.
-  serveSpa(app);
+  // Optional single-service mode: serve the built frontend from this process
+  // too, so a deploy can be one container instead of two.
+  serveSpa(app, options.spa ?? { enabled: env.SERVE_SPA, distPath: env.SPA_DIST_PATH });
 
   // Order matters: unmatched routes first, then the error translator last.
   app.use(notFoundHandler);
