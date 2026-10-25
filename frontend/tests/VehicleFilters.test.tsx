@@ -41,9 +41,7 @@ describe('VehicleFilters', () => {
 
     await userEvent.selectOptions(screen.getByLabelText('Make'), 'Toyota');
 
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ make: 'Toyota', page: 1 }),
-    );
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ make: 'Toyota', page: 1 }));
   });
 
   it('debounces the free-text search instead of firing per keystroke', async () => {
@@ -75,7 +73,11 @@ describe('VehicleFilters', () => {
     expect(screen.queryByRole('button', { name: /clear filters/i })).not.toBeInTheDocument();
 
     rerender(
-      <VehicleFilters {...baseProps} value={{ sort: 'newest', make: 'Ford' }} onChange={onChange} />,
+      <VehicleFilters
+        {...baseProps}
+        value={{ sort: 'newest', make: 'Ford' }}
+        onChange={onChange}
+      />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: /clear filters/i }));

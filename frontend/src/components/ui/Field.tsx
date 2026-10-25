@@ -1,4 +1,9 @@
-import { useId, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import {
+  useId,
+  type InputHTMLAttributes,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from 'react';
 
 const CONTROL_CLASSES =
   'w-full rounded-lg border border-ink-600 bg-ink-850/80 px-3.5 py-2.5 text-sm text-ink-100 placeholder:text-ink-400 transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 disabled:opacity-50';

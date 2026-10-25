@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext.js';
+import { useAuth } from '../hooks/useAuth.js';
 import { ApiError } from '../lib/api.js';
 import type { SearchMeta, Vehicle, VehicleFilters } from '../types/index.js';
 

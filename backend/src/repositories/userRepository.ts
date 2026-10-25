@@ -45,9 +45,7 @@ export class UserRepository {
   }
 
   findById(id: string): PublicUser | null {
-    const row = this.db
-      .prepare<[string], UserRow>('SELECT * FROM users WHERE id = ?')
-      .get(id);
+    const row = this.db.prepare<[string], UserRow>('SELECT * FROM users WHERE id = ?').get(id);
 
     return row ? toPublicUser(row) : null;
   }
@@ -70,9 +68,7 @@ export class UserRepository {
   }
 
   countAll(): number {
-    const row = this.db
-      .prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM users')
-      .get();
+    const row = this.db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM users').get();
 
     return row?.count ?? 0;
   }

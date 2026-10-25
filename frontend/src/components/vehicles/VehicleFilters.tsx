@@ -140,7 +140,9 @@ export function VehicleFilters({
         <p className="text-sm text-ink-400">
           <span className="font-semibold text-ink-100">{resultCount}</span>{' '}
           {resultCount === 1 ? 'vehicle' : 'vehicles'} found
-          {activeCount > 0 ? ` with ${activeCount} filter${activeCount === 1 ? '' : 's'} applied` : ''}
+          {activeCount > 0
+            ? ` with ${activeCount} filter${activeCount === 1 ? '' : 's'} applied`
+            : ''}
         </p>
 
         {activeCount > 0 ? (

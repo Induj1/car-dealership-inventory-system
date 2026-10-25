@@ -63,7 +63,9 @@ export class VehicleRepository {
   }
 
   findById(id: string): Vehicle | null {
-    const row = this.db.prepare<[string], VehicleRow>('SELECT * FROM vehicles WHERE id = ?').get(id);
+    const row = this.db
+      .prepare<[string], VehicleRow>('SELECT * FROM vehicles WHERE id = ?')
+      .get(id);
     return row ? toVehicle(row) : null;
   }
 
@@ -89,7 +91,7 @@ export class VehicleRepository {
    * values are always bound, so no caller-supplied string reaches the SQL text.
    */
   update(id: string, patch: Partial<CreateVehicleRecord>): Vehicle | null {
-    const columns: Array<keyof CreateVehicleRecord> = [
+    const columns: (keyof CreateVehicleRecord)[] = [
       'make',
       'model',
       'category',
@@ -212,7 +214,9 @@ export class VehicleRepository {
   /** Distinct makes and categories currently listed, for the filter dropdowns. */
   facets(): { makes: string[]; categories: string[] } {
     const makes = this.db
-      .prepare<[], { make: string }>('SELECT DISTINCT make FROM vehicles ORDER BY make COLLATE NOCASE')
+      .prepare<[], { make: string }>(
+        'SELECT DISTINCT make FROM vehicles ORDER BY make COLLATE NOCASE',
+      )
       .all()
       .map((row) => row.make);
 
@@ -235,7 +239,9 @@ export class VehicleRepository {
   decrementStock(id: string, quantity: number): boolean {
     return (
       this.db
-        .prepare('UPDATE vehicles SET quantity = quantity - ?, updated_at = datetime(\'now\') WHERE id = ? AND quantity >= ?')
+        .prepare(
+          "UPDATE vehicles SET quantity = quantity - ?, updated_at = datetime('now') WHERE id = ? AND quantity >= ?",
+        )
         .run(quantity, id, quantity).changes > 0
     );
   }
@@ -244,7 +250,9 @@ export class VehicleRepository {
   incrementStock(id: string, quantity: number): boolean {
     return (
       this.db
-        .prepare('UPDATE vehicles SET quantity = quantity + ?, updated_at = datetime(\'now\') WHERE id = ?')
+        .prepare(
+          "UPDATE vehicles SET quantity = quantity + ?, updated_at = datetime('now') WHERE id = ?",
+        )
         .run(quantity, id).changes > 0
     );
   }

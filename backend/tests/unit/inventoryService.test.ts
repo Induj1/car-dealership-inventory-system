@@ -145,7 +145,7 @@ describe('InventoryService', () => {
   });
 
   describe('purchase history', () => {
-    it('returns a buyer\'s purchases, newest first, with the vehicle attached', () => {
+    it("returns a buyer's purchases, newest first, with the vehicle attached", () => {
       const suv = vehicles.create({
         make: 'Toyota',
         model: 'RAV4',

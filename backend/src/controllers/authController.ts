@@ -33,7 +33,7 @@ export class AuthController {
   };
 
   /** Lets the frontend restore a session from a stored token on page load. */
-  me = async (req: Request, res: Response): Promise<void> => {
+  me = (req: Request, res: Response): void => {
     const user = req.user ? this.users.findById(req.user.id) : null;
 
     if (!user) {

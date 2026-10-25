@@ -63,7 +63,9 @@ export class VehicleService {
       ...patch,
       ...(patch.make !== undefined ? { make } : {}),
       ...(patch.model !== undefined ? { model } : {}),
-      ...(patch.description !== undefined ? { description: patch.description?.trim() ?? null } : {}),
+      ...(patch.description !== undefined
+        ? { description: patch.description?.trim() ?? null }
+        : {}),
     });
 
     if (!updated) throw new NotFoundError(`No vehicle with id ${id}`);

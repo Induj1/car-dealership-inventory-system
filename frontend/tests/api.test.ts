@@ -6,7 +6,7 @@ function stubFetch(status: number, body: unknown) {
   const fetchMock = vi.fn().mockResolvedValue({
     status,
     ok: status >= 200 && status < 300,
-    json: async () => body,
+    json: () => Promise.resolve(body),
   });
 
   vi.stubGlobal('fetch', fetchMock);
@@ -119,13 +119,13 @@ describe('ApiClient', () => {
       vi.fn().mockResolvedValue({
         status: 502,
         ok: false,
-        json: async () => {
-          throw new Error('not json');
-        },
+        json: () => Promise.reject(new Error('not json')),
       }),
     );
 
-    await expect(new ApiClient(() => null, 'http://api.test').me()).rejects.toBeInstanceOf(ApiError);
+    await expect(new ApiClient(() => null, 'http://api.test').me()).rejects.toBeInstanceOf(
+      ApiError,
+    );
   });
 
   it('handles a 204 with no body (delete)', async () => {
@@ -146,7 +146,9 @@ describe('ApiClient', () => {
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://api.test/vehicles/search?make=Tesla&maxPrice=50000&availableOnly=true');
+    expect(url).toBe(
+      'http://api.test/vehicles/search?make=Tesla&maxPrice=50000&availableOnly=true',
+    );
     expect(init.body).toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useAuth } from '../context/AuthContext.js';
-import { useToast } from '../context/ToastContext.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { useToast } from '../hooks/useToast.js';
 import { useVehicles } from '../hooks/useVehicles.js';
 import { ApiError } from '../lib/api.js';
 import { formatPrice } from '../lib/format.js';
@@ -38,16 +38,23 @@ export function DashboardPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [restockQuantity, setRestockQuantity] = useState('1');
 
-  const { vehicles, meta, makes, categories, loading, error, refresh, replaceVehicle, removeVehicle } =
-    useVehicles(filters);
+  const {
+    vehicles,
+    meta,
+    makes,
+    categories,
+    loading,
+    error,
+    refresh,
+    replaceVehicle,
+    removeVehicle,
+  } = useVehicles(filters);
 
   const stats = useMemo(
     () => ({
       listings: meta.total,
       inStock: vehicles.reduce((sum, vehicle) => sum + vehicle.quantity, 0),
-      cheapest: vehicles.length
-        ? Math.min(...vehicles.map((vehicle) => vehicle.price))
-        : null,
+      cheapest: vehicles.length ? Math.min(...vehicles.map((vehicle) => vehicle.price)) : null,
     }),
     [vehicles, meta.total],
   );
@@ -183,7 +190,13 @@ export function DashboardPage() {
         {isAdmin ? (
           <div className="relative mt-6 flex flex-wrap gap-3">
             <Button onClick={() => setDialog({ kind: 'form', vehicle: null })}>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               Add a vehicle
@@ -222,7 +235,10 @@ export function DashboardPage() {
           title="No vehicles match those filters"
           message="Try widening the price range, or clear the filters to see the whole lot."
           action={
-            <Button variant="secondary" onClick={() => setFilters({ sort: 'newest', page: 1, limit: 12 })}>
+            <Button
+              variant="secondary"
+              onClick={() => setFilters({ sort: 'newest', page: 1, limit: 12 })}
+            >
               Clear filters
             </Button>
           }
@@ -236,7 +252,7 @@ export function DashboardPage() {
                 vehicle={vehicle}
                 isAdmin={isAdmin}
                 busy={busyId === vehicle.id}
-                onPurchase={purchase}
+                onPurchase={(vehicle) => void purchase(vehicle)}
                 onEdit={(target) => setDialog({ kind: 'form', vehicle: target })}
                 onDelete={(target) => setDialog({ kind: 'delete', vehicle: target })}
                 onRestock={(target) => {
@@ -262,7 +278,7 @@ export function DashboardPage() {
         saving={saving}
         fieldErrors={fieldErrors}
         onClose={closeDialog}
-        onSubmit={saveVehicle}
+        onSubmit={(input) => void saveVehicle(input)}
       />
 
       <Modal
@@ -279,7 +295,7 @@ export function DashboardPage() {
             <Button variant="secondary" onClick={closeDialog} disabled={saving}>
               Keep it
             </Button>
-            <Button variant="danger" onClick={confirmDelete} loading={saving}>
+            <Button variant="danger" onClick={() => void confirmDelete()} loading={saving}>
               Delete listing
             </Button>
           </>
@@ -302,7 +318,7 @@ export function DashboardPage() {
             <Button variant="secondary" onClick={closeDialog} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={confirmRestock} loading={saving}>
+            <Button onClick={() => void confirmRestock()} loading={saving}>
               Add to stock
             </Button>
           </>

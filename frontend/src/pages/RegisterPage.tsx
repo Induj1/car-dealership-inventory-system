@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.js';
+import { useAuth } from '../hooks/useAuth.js';
 import { ApiError } from '../lib/api.js';
 import { Button } from '../components/ui/Button.js';
 import { TextField } from '../components/ui/Field.js';
@@ -59,7 +59,7 @@ export function RegisterPage() {
       title="Create your account"
       subtitle="New accounts can browse and buy. Admin access is granted by the dealership."
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
+      <form onSubmit={(event) => void submit(event)} className="space-y-4" noValidate>
         <TextField
           label="Full name"
           autoComplete="name"

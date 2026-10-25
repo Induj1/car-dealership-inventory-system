@@ -39,10 +39,10 @@ export function parseOrThrow<S extends ZodTypeAny>(schema: S, data: unknown): ou
     throw new ValidationError('Validation failed', formatZodIssues(result.error));
   }
 
-  return result.data;
+  return result.data as output<S>;
 }
 
-function formatZodIssues(error: ZodError): Array<{ field: string; message: string }> {
+function formatZodIssues(error: ZodError): { field: string; message: string }[] {
   return error.issues.map((issue) => ({
     field: issue.path.join('.') || '(root)',
     message: issue.message,

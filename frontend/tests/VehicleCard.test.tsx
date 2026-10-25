@@ -37,9 +37,7 @@ describe('VehicleCard', () => {
 
   it('disables the purchase button when the quantity is zero', () => {
     // This is the behaviour the brief calls out explicitly.
-    render(
-      <VehicleCard vehicle={{ ...vehicle, quantity: 0 }} isAdmin={false} onPurchase={noop} />,
-    );
+    render(<VehicleCard vehicle={{ ...vehicle, quantity: 0 }} isAdmin={false} onPurchase={noop} />);
 
     const button = screen.getByRole('button', { name: /out of stock/i });
 
@@ -73,11 +71,15 @@ describe('VehicleCard', () => {
     );
     expect(screen.getByText('3 in stock')).toBeInTheDocument();
 
-    rerender(<VehicleCard vehicle={{ ...vehicle, quantity: 1 }} isAdmin={false} onPurchase={noop} />);
+    rerender(
+      <VehicleCard vehicle={{ ...vehicle, quantity: 1 }} isAdmin={false} onPurchase={noop} />,
+    );
     expect(screen.getByText('1 left')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /buy the last one/i })).toBeEnabled();
 
-    rerender(<VehicleCard vehicle={{ ...vehicle, quantity: 0 }} isAdmin={false} onPurchase={noop} />);
+    rerender(
+      <VehicleCard vehicle={{ ...vehicle, quantity: 0 }} isAdmin={false} onPurchase={noop} />,
+    );
     expect(screen.getByText('Sold out')).toBeInTheDocument();
   });
 

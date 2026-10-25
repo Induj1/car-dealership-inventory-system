@@ -8,11 +8,19 @@ const categorySchema = z
   .string()
   .trim()
   .toUpperCase()
-  .pipe(z.enum(VEHICLE_CATEGORIES, { message: `Category must be one of: ${VEHICLE_CATEGORIES.join(', ')}` }));
+  .pipe(
+    z.enum(VEHICLE_CATEGORIES, {
+      message: `Category must be one of: ${VEHICLE_CATEGORIES.join(', ')}`,
+    }),
+  );
 
 export const createVehicleSchema = z.object({
   make: z.string({ required_error: 'Make is required' }).trim().min(1, 'Make is required').max(60),
-  model: z.string({ required_error: 'Model is required' }).trim().min(1, 'Model is required').max(60),
+  model: z
+    .string({ required_error: 'Model is required' })
+    .trim()
+    .min(1, 'Model is required')
+    .max(60),
   category: categorySchema,
   year: z.coerce
     .number({ required_error: 'Year is required' })
@@ -35,12 +43,20 @@ export const createVehicleSchema = z.object({
  * Updates are a partial of create, but an empty body is rejected: PUT with
  * nothing to change is a client mistake, not a no-op.
  */
-export const updateVehicleSchema = createVehicleSchema.partial().refine(
-  (patch) => Object.keys(patch).length > 0,
-  { message: 'Provide at least one field to update' },
-);
+export const updateVehicleSchema = createVehicleSchema
+  .partial()
+  .refine((patch) => Object.keys(patch).length > 0, {
+    message: 'Provide at least one field to update',
+  });
 
-const SORT_OPTIONS = ['newest', 'oldest', 'price_asc', 'price_desc', 'year_desc', 'year_asc'] as const;
+const SORT_OPTIONS = [
+  'newest',
+  'oldest',
+  'price_asc',
+  'price_desc',
+  'year_desc',
+  'year_asc',
+] as const;
 
 export const searchVehiclesSchema = z.object({
   q: z.string().trim().max(120).optional(),
@@ -52,7 +68,11 @@ export const searchVehiclesSchema = z.object({
   minPrice: z.coerce.number().nonnegative('minPrice cannot be negative').optional(),
   maxPrice: z.coerce.number().nonnegative('maxPrice cannot be negative').optional(),
   minYear: z.coerce.number().int().min(1900).optional(),
-  maxYear: z.coerce.number().int().max(currentYear + 2).optional(),
+  maxYear: z.coerce
+    .number()
+    .int()
+    .max(currentYear + 2)
+    .optional(),
   availableOnly: z
     .union([z.boolean(), z.enum(['true', 'false'])])
     .transform((value) => value === true || value === 'true')

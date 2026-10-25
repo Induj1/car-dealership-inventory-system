@@ -63,13 +63,16 @@ export class PurchaseRepository {
    */
   findByUserWithVehicle(userId: string): PurchaseWithVehicle[] {
     const rows = this.db
-      .prepare<[string], PurchaseRow & {
-        v_id: string | null;
-        v_make: string | null;
-        v_model: string | null;
-        v_category: string | null;
-        v_year: number | null;
-      }>(
+      .prepare<
+        [string],
+        PurchaseRow & {
+          v_id: string | null;
+          v_make: string | null;
+          v_model: string | null;
+          v_category: string | null;
+          v_year: number | null;
+        }
+      >(
         `SELECT p.*,
                 v.id       AS v_id,
                 v.make     AS v_make,

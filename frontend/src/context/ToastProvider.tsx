@@ -1,18 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-
-type ToastTone = 'success' | 'error' | 'info';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { ToastContext, type ToastContextValue, type ToastTone } from './ToastContext.js';
 
 interface Toast {
   id: number;
   tone: ToastTone;
   message: string;
 }
-
-interface ToastContextValue {
-  notify: (message: string, tone?: ToastTone) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TONE_STYLES: Record<ToastTone, string> = {
   success: 'border-success-500/40 bg-success-500/10 text-success-300',
@@ -22,16 +15,20 @@ const TONE_STYLES: Record<ToastTone, string> = {
 
 const TONE_ICONS: Record<ToastTone, string> = {
   success: 'M5 13l4 4L19 7',
-  error: 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
+  error:
+    'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
   info: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
 };
+
+const DISMISS_AFTER_MS = 5000;
 
 /**
  * Lightweight toast notifications.
  *
- * Feedback for an action (bought a car, restocked, failed) belongs next to the
- * user's attention, not in a console log - and a single provider means no
- * component has to own its own alert state.
+ * Feedback for an action - bought a car, restocked, failed - belongs where the
+ * user is already looking, and a single provider means no component has to own
+ * its own alert state. The live region is polite rather than assertive so a
+ * screen reader finishes the current sentence before announcing it.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -44,12 +41,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (message: string, tone: ToastTone = 'info') => {
       const id = Date.now() + Math.random();
       setToasts((current) => [...current, { id, tone, message }]);
-      window.setTimeout(() => dismiss(id), 4500);
+      window.setTimeout(() => dismiss(id), DISMISS_AFTER_MS);
     },
     [dismiss],
   );
 
-  const value = useMemo(() => ({ notify }), [notify]);
+  const value = useMemo<ToastContextValue>(() => ({ notify }), [notify]);
 
   return (
     <ToastContext.Provider value={value}>
@@ -63,7 +60,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lift backdrop-blur-md animate-fade-up ${TONE_STYLES[toast.tone]}`}
+            className={`animate-fade-up pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lift backdrop-blur-md ${TONE_STYLES[toast.tone]}`}
           >
             <svg
               className="mt-0.5 h-4 w-4 shrink-0"
@@ -75,14 +72,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d={TONE_ICONS[toast.tone]} />
             </svg>
+
             <p className="flex-1">{toast.message}</p>
+
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
               className="shrink-0 text-ink-300 transition hover:text-ink-100"
               aria-label="Dismiss notification"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -91,14 +97,4 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast(): ToastContextValue {
-  const context = useContext(ToastContext);
-
-  if (!context) {
-    throw new Error('useToast must be used inside a <ToastProvider>');
-  }
-
-  return context;
 }

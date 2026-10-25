@@ -24,7 +24,7 @@ export class VehicleController {
     private readonly inventory: InventoryService,
   ) {}
 
-  create = async (req: Request, res: Response): Promise<void> => {
+  create = (req: Request, res: Response): void => {
     const body = parseOrThrow(createVehicleSchema, req.body);
 
     sendSuccess(res, { vehicle: this.vehicles.create(body) }, 201);
@@ -34,48 +34,48 @@ export class VehicleController {
    * Backs both GET /vehicles and GET /vehicles/search: listing is just a
    * search with no filters, so there is one code path instead of two.
    */
-  search = async (req: Request, res: Response): Promise<void> => {
+  search = (req: Request, res: Response): void => {
     const query = parseOrThrow(searchVehiclesSchema, req.query);
     const { items, ...meta } = this.vehicles.search(query);
 
     sendSuccess(res, { vehicles: items }, 200, { ...meta, filters: query });
   };
 
-  filters = async (_req: Request, res: Response): Promise<void> => {
+  filters = (_req: Request, res: Response): void => {
     sendSuccess(res, this.vehicles.facets());
   };
 
-  findOne = async (req: Request, res: Response): Promise<void> => {
+  findOne = (req: Request, res: Response): void => {
     sendSuccess(res, { vehicle: this.vehicles.findById(requireId(req)) });
   };
 
-  update = async (req: Request, res: Response): Promise<void> => {
+  update = (req: Request, res: Response): void => {
     const patch = parseOrThrow(updateVehicleSchema, req.body);
 
     sendSuccess(res, { vehicle: this.vehicles.update(requireId(req), patch) });
   };
 
-  remove = async (req: Request, res: Response): Promise<void> => {
+  remove = (req: Request, res: Response): void => {
     this.vehicles.remove(requireId(req));
 
     // 204: the deletion succeeded and there is nothing meaningful to return.
     res.status(204).send();
   };
 
-  purchase = async (req: Request, res: Response): Promise<void> => {
+  purchase = (req: Request, res: Response): void => {
     const { quantity } = parseOrThrow(purchaseSchema, req.body ?? {});
     const buyer = requireUser(req);
 
     sendSuccess(res, this.inventory.purchase(requireId(req), buyer.id, quantity), 201);
   };
 
-  restock = async (req: Request, res: Response): Promise<void> => {
+  restock = (req: Request, res: Response): void => {
     const { quantity } = parseOrThrow(restockSchema, req.body);
 
     sendSuccess(res, { vehicle: this.inventory.restock(requireId(req), quantity) });
   };
 
-  myPurchases = async (req: Request, res: Response): Promise<void> => {
+  myPurchases = (req: Request, res: Response): void => {
     sendSuccess(res, { purchases: this.inventory.historyFor(requireUser(req).id) });
   };
 }

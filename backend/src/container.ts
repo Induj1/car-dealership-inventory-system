@@ -32,11 +32,7 @@ export function buildContainer(db: Database): Container {
 
   const authService = new AuthService(userRepository);
   const vehicleService = new VehicleService(vehicleRepository);
-  const inventoryService = new InventoryService(
-    vehicleRepository,
-    purchaseRepository,
-    transaction,
-  );
+  const inventoryService = new InventoryService(vehicleRepository, purchaseRepository, transaction);
 
   return {
     userRepository,

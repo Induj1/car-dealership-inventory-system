@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.js';
+import { useAuth } from '../../hooks/useAuth.js';
 import { Button } from '../ui/Button.js';
 import { initials } from '../../lib/format.js';
 
@@ -79,7 +79,9 @@ function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
       end
       className={({ isActive }) =>
         `rounded-lg px-3 py-2 text-sm font-medium transition ${
-          isActive ? 'bg-ink-800 text-ink-100' : 'text-ink-300 hover:bg-ink-800/60 hover:text-ink-100'
+          isActive
+            ? 'bg-ink-800 text-ink-100'
+            : 'text-ink-300 hover:bg-ink-800/60 hover:text-ink-100'
         }`
       }
     >

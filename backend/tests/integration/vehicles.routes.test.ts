@@ -478,7 +478,7 @@ describe('vehicle endpoints', () => {
   });
 
   describe('GET /api/purchases/me', () => {
-    it('returns the signed-in user\'s purchases only', async () => {
+    it("returns the signed-in user's purchases only", async () => {
       const id = await seed();
       const other = await registerCustomer(ctx.app);
 

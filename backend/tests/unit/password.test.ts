@@ -9,7 +9,10 @@ describe('password hashing', () => {
   });
 
   it('produces a different hash each time (salted)', async () => {
-    const [a, b] = await Promise.all([hashPassword('same-password'), hashPassword('same-password')]);
+    const [a, b] = await Promise.all([
+      hashPassword('same-password'),
+      hashPassword('same-password'),
+    ]);
     expect(a).not.toBe(b);
   });
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.js';
+import { useAuth } from '../hooks/useAuth.js';
 import { ApiError } from '../lib/api.js';
 import { Button } from '../components/ui/Button.js';
 import { TextField } from '../components/ui/Field.js';
@@ -52,7 +52,7 @@ export function LoginPage() {
       title="Welcome back"
       subtitle="Sign in to browse the lot and manage your purchases."
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
+      <form onSubmit={(event) => void submit(event)} className="space-y-4" noValidate>
         <TextField
           label="Email"
           type="email"

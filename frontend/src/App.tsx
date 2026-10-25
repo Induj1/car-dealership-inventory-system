@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.js';
-import { ToastProvider } from './context/ToastContext.js';
+import { AuthProvider } from './context/AuthProvider.js';
+import { ToastProvider } from './context/ToastProvider.js';
 import { Navbar } from './components/layout/Navbar.js';
 import { ProtectedRoute } from './components/ProtectedRoute.js';
 import { LoginPage } from './pages/LoginPage.js';

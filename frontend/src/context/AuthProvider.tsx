@@ -1,42 +1,25 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiClient, ApiError } from '../lib/api.js';
 import type { User } from '../types/index.js';
+import { AuthContext, type AuthContextValue } from './AuthContext.js';
 
 const TOKEN_STORAGE_KEY = 'apex-motors.token';
-
-interface AuthContextValue {
-  user: User | null;
-  api: ApiClient;
-  /** True until the stored token has been checked, so routes do not flash. */
-  initialising: boolean;
-  isAdmin: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 /**
  * Owns the session: the token, the current user, and the single ApiClient the
  * rest of the app uses.
  *
- * The token lives in a ref as well as localStorage so the API client can read
- * the current value synchronously without being rebuilt on every render.
+ * The token is held in a ref as well as in localStorage, and the API client is
+ * given a *getter* rather than the value. That is what lets one client
+ * instance survive a login: it reads the current token when a request is
+ * actually made, instead of capturing whatever was there when it was built.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const tokenRef = useRef<string | null>(readStoredToken());
   const [user, setUser] = useState<User | null>(null);
   const [initialising, setInitialising] = useState(true);
+
+  const readToken = useCallback(() => tokenRef.current, []);
 
   const setToken = useCallback((token: string | null) => {
     tokenRef.current = token;
@@ -49,19 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const api = useMemo(() => new ApiClient(() => tokenRef.current), []);
+  /*
+   * readToken is passed here, never called: the ApiClient invokes it when a
+   * request is actually made, long after render. Handing the client a getter
+   * is exactly what keeps a single instance valid across a login, so the rule
+   * is suppressed deliberately rather than designed around.
+   */
+  // eslint-disable-next-line react-hooks/refs
+  const api = useMemo(() => new ApiClient(readToken), [readToken]);
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
   }, [setToken]);
 
-  // Restore a session on first load: a stored token is only trustworthy if
-  // the server still accepts it.
+  // Restore a session on first load: a stored token is only trustworthy if the
+  // server still accepts it, so it is verified rather than assumed.
   useEffect(() => {
     let cancelled = false;
 
-    if (!tokenRef.current) {
+    if (!readToken()) {
       setInitialising(false);
       return;
     }
@@ -81,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [api, logout]);
+  }, [api, logout, readToken]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -115,16 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth must be used inside an <AuthProvider>');
-  }
-
-  return context;
 }
 
 function readStoredToken(): string | null {

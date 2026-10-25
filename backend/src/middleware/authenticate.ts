@@ -18,7 +18,9 @@ export const authenticate: RequestHandler = (req, _res, next) => {
   const [scheme, token] = header.split(' ');
 
   if (scheme?.toLowerCase() !== 'bearer' || !token) {
-    return next(new UnauthorizedError('Expected an Authorization header of the form "Bearer <token>"'));
+    return next(
+      new UnauthorizedError('Expected an Authorization header of the form "Bearer <token>"'),
+    );
   }
 
   try {

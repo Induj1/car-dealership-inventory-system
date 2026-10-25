@@ -26,10 +26,9 @@ describe('database schema', () => {
   });
 
   it('enforces foreign keys', () => {
-    const { foreign_keys: enabled } = db.pragma('foreign_keys', { simple: false })[0] as {
-      foreign_keys: number;
-    };
-    expect(enabled).toBe(1);
+    const rows = db.pragma('foreign_keys', { simple: false }) as { foreign_keys: number }[];
+
+    expect(rows[0]?.foreign_keys).toBe(1);
   });
 
   it('rejects two users with the same email', () => {
@@ -47,18 +46,14 @@ describe('database schema', () => {
     const insert = db.prepare(
       'INSERT INTO users (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
     );
-    expect(() => insert.run('u3', 'Eve', 'eve@example.com', 'hash', 'SUPERUSER')).toThrow(
-      /CHECK/i,
-    );
+    expect(() => insert.run('u3', 'Eve', 'eve@example.com', 'hash', 'SUPERUSER')).toThrow(/CHECK/i);
   });
 
   it('rejects a negative vehicle quantity', () => {
     const insert = db.prepare(
       'INSERT INTO vehicles (id, make, model, category, year, price, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
     );
-    expect(() => insert.run('v1', 'Toyota', 'Corolla', 'SEDAN', 2022, 21000, -1)).toThrow(
-      /CHECK/i,
-    );
+    expect(() => insert.run('v1', 'Toyota', 'Corolla', 'SEDAN', 2022, 21000, -1)).toThrow(/CHECK/i);
   });
 
   it('rejects a negative vehicle price', () => {

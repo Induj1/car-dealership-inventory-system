@@ -41,9 +41,7 @@ export class InventoryService {
     const vehicle = this.requireVehicle(vehicleId);
 
     if (vehicle.quantity === 0) {
-      throw new ConflictError(
-        `${vehicle.year} ${vehicle.make} ${vehicle.model} is out of stock`,
-      );
+      throw new ConflictError(`${vehicle.year} ${vehicle.make} ${vehicle.model} is out of stock`);
     }
 
     if (vehicle.quantity < quantity) {

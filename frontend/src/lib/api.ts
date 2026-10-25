@@ -29,6 +29,14 @@ export class ApiError extends Error {
 
 type TokenReader = () => string | null;
 
+/** The two response shapes the API can return, mirroring `utils/http.ts`. */
+type Envelope<T, M> =
+  | { success: true; data: T; meta?: M }
+  | {
+      success: false;
+      error: { code?: string; message?: string; details?: { field: string; message: string }[] };
+    };
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
@@ -152,10 +160,13 @@ export class ApiClient {
       return { data: null as T, meta: undefined as M };
     }
 
-    const payload = await response.json().catch(() => null);
+    // `response.json()` is typed `any`, so it is narrowed to the envelope
+    // shape here and nowhere else. Everything past this point is typed.
+    const payload = (await response.json().catch(() => null)) as Envelope<T, M> | null;
 
-    if (!response.ok || !payload?.success) {
-      const error = payload?.error;
+    if (!response.ok || payload?.success !== true) {
+      const error = payload?.success === false ? payload.error : undefined;
+
       throw new ApiError(
         error?.message ?? `Request failed with status ${response.status}`,
         response.status,
@@ -164,7 +175,7 @@ export class ApiClient {
       );
     }
 
-    return { data: payload.data as T, meta: payload.meta as M };
+    return { data: payload.data, meta: payload.meta as M };
   }
 }
 
@@ -179,6 +190,13 @@ export function buildQueryString(query?: Record<string, unknown>): string {
 
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined || value === null || value === '' || value === false) continue;
+
+    // Only primitives belong in a query string; anything else would arrive as
+    // the literal "[object Object]".
+    if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+      continue;
+    }
+
     params.set(key, String(value));
   }
 

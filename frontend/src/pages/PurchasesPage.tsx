@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.js';
+import { useAuth } from '../hooks/useAuth.js';
 import { ApiError } from '../lib/api.js';
 import { formatCategory, formatDate, formatPrice } from '../lib/format.js';
 import { Button } from '../components/ui/Button.js';
